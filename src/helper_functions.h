@@ -251,8 +251,10 @@ inline bool read_landmark_data(std::string filename,
 inline double multiv_prob(double x_obs, double y_obs,
                           double mu_x, double mu_y, double sig_x, double sig_y) {
   double gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
-  double exponent = (pow(x_obs - mu_x, 2) / (2 * pow(sig_x, 2)))
-      + (pow(y_obs - mu_y, 2) / (2 * pow(sig_y, 2)));
+  double x_diff = x_obs - mu_x;
+  double y_diff = y_obs - mu_y;
+  double exponent = ((x_diff * x_diff) / (2 * (sig_x * sig_x)))
+      + ((y_diff * y_diff) / (2 * (sig_y * sig_y)));
 
   return gauss_norm * exp(-exponent);
 }

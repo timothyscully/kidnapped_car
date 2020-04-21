@@ -30,7 +30,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 20;  // TODO: Set the number of particles
+  num_particles = 5;  // TODO: Set the number of particles
   auto x_dist = std::normal_distribution<double>(x, std[0]);
   auto y_dist = std::normal_distribution<double>(y, std[1]);
   auto theta_dist = std::normal_distribution<double>(theta, std[2]);
@@ -103,6 +103,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
   for (Particle &p: particles) {
     double weight = 1;
+    double sin_p_theta = sin(p.theta);
+    double cos_p_theta = cos(p.theta);
 
     /*
     std::vector<Map::single_landmark_s> landmarks_in_range;
@@ -117,8 +119,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     for (auto &o: observations) {
       // Transform observation into map coordinates
-      double map_x = p.x + cos(p.theta) * o.x - sin(p.theta) * o.y;
-      double map_y = p.y + sin(p.theta) * o.x + cos(p.theta) * o.y;
+      double map_x = p.x + cos_p_theta * o.x - sin_p_theta * o.y;
+      double map_y = p.y + sin_p_theta * o.x + cos_p_theta * o.y;
 
       double min_dist = sensor_range;
       int landmark_idx = -1;
@@ -127,7 +129,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       for (const auto &landmark: map_landmarks.landmark_list) {
         double dx = landmark.x_f - map_x;
         double dy = landmark.y_f - map_y;
-        double dist = sqrt(dx * dx + dy * dy);
+        double dist = (dx * dx + dy * dy); // Squared distance, saves a sqrt
 
         if (dist < min_dist) {
           landmark_idx = landmark.id_i - 1;
@@ -168,7 +170,7 @@ void ParticleFilter::resample() {
     newParticles.push_back(particles[d(gen)]);
   }
 
-  particles = newParticles;
+  particles = std::move(newParticles); // std::move faster than copy
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
