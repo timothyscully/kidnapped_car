@@ -30,7 +30,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 5;  // TODO: Set the number of particles
+  num_particles = 20;  // TODO: Set the number of particles
   auto x_dist = std::normal_distribution<double>(x, std[0]);
   auto y_dist = std::normal_distribution<double>(y, std[1]);
   auto theta_dist = std::normal_distribution<double>(theta, std[2]);
@@ -100,24 +100,22 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
-
   for (Particle &p: particles) {
     double weight = 1;
     double sin_p_theta = sin(p.theta);
     double cos_p_theta = cos(p.theta);
 
-    /*
     std::vector<Map::single_landmark_s> landmarks_in_range;
     for (const auto &landmark: map_landmarks.landmark_list) {
       double dx = landmark.x_f - p.x;
       double dy = landmark.y_f - p.y;
-      double dist = sqrt(dx * dx + dy * dy);
+      double dist = (dx * dx + dy * dy);
 
-      if (dist < sensor_range)
+      if (dist <= (sensor_range * sensor_range))
         landmarks_in_range.push_back(landmark);
-    }*/
+    }
 
-    for (auto &o: observations) {
+    for (const auto &o: observations) {
       // Transform observation into map coordinates
       double map_x = p.x + cos_p_theta * o.x - sin_p_theta * o.y;
       double map_y = p.y + sin_p_theta * o.x + cos_p_theta * o.y;
@@ -126,7 +124,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       int landmark_idx = -1;
 
       // Find nearest landmark
-      for (const auto &landmark: map_landmarks.landmark_list) {
+      for (const auto &landmark: landmarks_in_range) {
         double dx = landmark.x_f - map_x;
         double dy = landmark.y_f - map_y;
         double dist = (dx * dx + dy * dy); // Squared distance, saves a sqrt
@@ -162,7 +160,7 @@ void ParticleFilter::resample() {
     weights.push_back(p.weight);
   }
 
-  std::vector<Particle> newParticles(particles.size());
+  std::vector<Particle> newParticles;
   std::discrete_distribution<> d(weights.begin(), weights.end());
   std::default_random_engine gen;
 
